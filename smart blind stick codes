@@ -1,0 +1,63 @@
+#include "NewPing.h" // library for Ultrasonic sensoror
+#define BLYNK_PRINT Serial
+#include <BlynkSimpleEsp8266.h>  // library for blynk
+#define FIREBASE_HOST "smart-blind-stick-c984b.firebaseio.com"//host name 
+#define FIREBASE_AUTH "koa4i9Gmz4wYZSCi0PVZBuCb3kiIDkKZKSm81vD4"//secreat key of firebase
+#define TRIGGER_PIN D1 // connect trigger pin to D1
+#define ECHO_PIN D2 // NewPing setup of pins and maximum distance.
+NewPing sonar(TRIGGER_PIN, ECHO_PIN); 
+char auth[] = "4va1Z0NsDqGjrgkM1U5KkfpunkxDKUUD";  // key of blynk
+#define WIFI_SSID "Rugema"
+#define WIFI_PASSWORD "ru123457"                                   //password of wifi ssid
+BlynkTimer timer;
+float duration, distance;
+const int buzzer = A0;  // assign  buzzer to A0 
+//_______________ method to send data to blynk______________________
+void sendSensor()
+{
+  Blynk.virtualWrite(V0, distance); // write the distance to virtual blynk
+  delay (200); 
+  Blynk.virtualWrite(V1, h);// write the humidity from the moisture sensor 
+  delay (200); 
+ }
+ //_______________end of methos___________________________
+
+void setup() 
+{  
+
+  Serial.begin(9600); //set baud rate of serial mpnitor
+  delay(1000); //pause
+  pinMode(buzzer, OUTPUT); // Set buzzer - pin A0 as an output
+  tone(buzzer, 1000); // Send 1KHz sound signal.
+   delay(1000);              
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);  //on the wifi                                   //try to connect with wifi
+  Serial.print("Connecting to ");
+  Serial.print(WIFI_SSID); // print on serial monitor ssid name
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print("."); // print dot while networking is not available
+    delay(500);
+  }
+  Serial.println();
+  Serial.print("Connected to ");
+  Serial.println(WIFI_SSID);
+  Serial.print("IP Address is : ");
+  Serial.println(WiFi.localIP());        //print local IP address
+ 
+  Blynk.begin(auth, WIFI_SSID, WIFI_PASSWORD);
+  timer.setInterval(1000L, sendSensor);   //Start reading dht sensor
+}
+
+void loop() 
+{
+  Blynk.run();
+  timer.run();
+  // Send ping, get distance in cm
+  distance = sonar.ping_cm();
+  h = dht.readHumidity();    // Reading temperature or humidity
+  
+  // Send results to Serial Monitor
+  Serial.print("Distance = ");
+  Serial.println(distance);
+Serial.print("Humidity: ");  Serial.print(h);  // print on serial monitor humidity
+  delay(2000);
+}
